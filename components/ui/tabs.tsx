@@ -3,6 +3,8 @@ import { ReactNode, useState, createContext, useContext } from "react";
 
 type TabsProps = {
   defaultValue?: string;
+  value?: string;
+  onValueChange?: (v: string) => void;
   children: ReactNode;
   className?: string;
 };
@@ -19,8 +21,19 @@ function useTabsContext(): TabsContext {
   return ctx;
 }
 
-export function Tabs({ defaultValue, children, className }: TabsProps) {
-  const [value, setValue] = useState(defaultValue ?? "");
+export function Tabs({
+  defaultValue,
+  value: controlled,
+  onValueChange,
+  children,
+  className,
+}: TabsProps) {
+  const [internal, setInternal] = useState(defaultValue ?? "");
+  const value = controlled ?? internal;
+  const setValue = (v: string) => {
+    if (onValueChange) onValueChange(v);
+    else setInternal(v);
+  };
   return (
     <TabsCtx.Provider value={{ value, setValue }}>
       <div className={className}>{children}</div>

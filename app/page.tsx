@@ -62,6 +62,7 @@ export default function RifasPage() {
   const ranges = useMemo(() => buildRanges(), []);
   const [selected, setSelected] = useState<number | undefined>(undefined);
   const [sold, setSold] = useState<Set<number>>(new Set());
+  const [tab, setTab] = useState<string>(ranges[0]?.label ?? "1-100");
 
   useEffect(() => {
     let active = true;
@@ -136,7 +137,12 @@ export default function RifasPage() {
         </div>
       </div>
 
-      <Tabs defaultValue={ranges[0].label} className="mt-4">
+      <Tabs
+        value={tab}
+        onValueChange={setTab}
+        defaultValue={ranges[0].label}
+        className="mt-4"
+      >
         <TabsList>
           {ranges.map((r) => (
             <TabsTrigger key={r.label} value={r.label}>
@@ -144,6 +150,74 @@ export default function RifasPage() {
             </TabsTrigger>
           ))}
         </TabsList>
+
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            className="inline-flex items-center rounded-md bg-blue-600 text-white px-3 py-2 text-sm hover:bg-blue-700"
+            onClick={() => {
+              const start = Number(tab.split("-")[0]);
+              if (!Number.isInteger(start)) return;
+              const cols = 10;
+              const rows = 10;
+              const cell = 64;
+              const pad = 24;
+              const headerH = 120;
+              const gapY = 24;
+              const width = cols * cell + pad * 2;
+              const height = rows * cell + pad * 2 + headerH + gapY;
+              const canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) return;
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, width, height);
+              const grad = ctx.createLinearGradient(pad, 0, width - pad, 0);
+              grad.addColorStop(0, "#2563eb");
+              grad.addColorStop(1, "#4f46e5");
+              ctx.fillStyle = grad;
+              ctx.beginPath();
+              ctx.roundRect(pad, pad, width - pad * 2, headerH, 14);
+              ctx.fill();
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillStyle = "#ffffff";
+              ctx.font = "bold 26px system-ui, -apple-system, Segoe UI, Roboto";
+              ctx.fillText("RIFA SOLIDARIA JMV", width / 2, pad + 40);
+              ctx.font = "600 18px system-ui, -apple-system, Segoe UI, Roboto";
+              ctx.fillText(`Rango ${tab}`, width / 2, pad + 78);
+              for (let i = 0; i < rows * cols; i++) {
+                const n = start + i;
+                const r = Math.floor(i / cols);
+                const c = i % cols;
+                const x = pad + c * cell;
+                const y = pad + headerH + gapY + r * cell;
+                const isSold = sold.has(n);
+                ctx.fillStyle = isSold ? "#16a34a" : "#ffffff";
+                ctx.strokeStyle = isSold ? "#15803d" : "#93c5fd";
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.roundRect(x, y, cell - 8, cell - 8, 10);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = isSold ? "#ffffff" : "#1e3a8a";
+                ctx.font =
+                  "bold 16px system-ui, -apple-system, Segoe UI, Roboto";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(String(n), x + (cell - 8) / 2, y + (cell - 8) / 2);
+              }
+              const url = canvas.toDataURL("image/png");
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `rifa-${tab}.png`;
+              a.click();
+            }}
+          >
+            Descargar imagen del rango
+          </button>
+        </div>
 
         {ranges.map((r) => (
           <TabsContent key={r.label} value={r.label}>
