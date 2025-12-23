@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/components/ui/sonner";
@@ -77,9 +78,28 @@ export default function RifasPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const es = new EventSource("/api/tickets/stream");
+    const handler = (ev: MessageEvent) => {
+      try {
+        const data = JSON.parse(ev.data ?? "[]");
+        if (Array.isArray(data)) setSold(new Set<number>(data));
+      } catch {}
+    };
+    es.addEventListener("sold", handler as any);
+    es.onmessage = handler as any;
+    es.onopen = () => {
+      // connected
+    };
+    es.onerror = () => {};
+    return () => {
+      es.close();
+    };
+  }, []);
+
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6">
-      <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white">
+      <div className="rounded-2xl bg-linear-to-r from-blue-600 to-indigo-600 p-5 text-white">
         <h1 className="text-3xl sm:text-4xl font-bold text-center tracking-wide">
           RIFA SOLIDARIA JMV
         </h1>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getTicketRepo } from "@/lib/db";
+import { broadcastSold } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,8 @@ export async function POST(req: Request) {
   if (exists)
     return NextResponse.json({ error: "Ya vendido" }, { status: 409 });
   await repo.sell(n);
+  const sold = await repo.list();
+  broadcastSold(sold);
   return NextResponse.json({ ok: true, number: n });
 }
 
@@ -34,5 +37,7 @@ export async function DELETE(req: Request) {
   if (!exists)
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   await repo.cancel(n);
+  const sold = await repo.list();
+  broadcastSold(sold);
   return NextResponse.json({ ok: true, number: n });
 }
